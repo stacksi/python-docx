@@ -1,12 +1,8 @@
 # encoding: utf-8
 
-"""
-Test suite for docx.opc.part module
-"""
+"""Unit test suite for docx.opc.part module"""
 
-from __future__ import (
-    absolute_import, division, print_function, unicode_literals
-)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import pytest
 
@@ -18,8 +14,13 @@ from docx.oxml.xmlchemy import BaseOxmlElement
 
 from ..unitutil.cxml import element
 from ..unitutil.mock import (
-    class_mock, cls_attr_mock, function_mock, initializer_mock,
-    instance_mock, loose_mock, Mock
+    class_mock,
+    cls_attr_mock,
+    function_mock,
+    initializer_mock,
+    instance_mock,
+    loose_mock,
+    property_mock,
 )
 
 
@@ -178,7 +179,24 @@ class DescribePartRelationshipManagementInterface(object):
         url = part.target_ref(rId_)
         assert url == url_
 
+    def it_can_iterate_parts_related_by_reltypes(self, rel_types_fixture, rels_prop_):
+        rels_, reltypes, expected_parts = rel_types_fixture
+        rels_prop_.return_value = rels_
+        part = Part(None, None)
+
+        parts = set(part.iter_parts_related_by(reltypes))
+
+        assert parts == expected_parts
+
     # fixtures ---------------------------------------------
+
+    def docx_rel(self, request, rtype, doc_part, rId_, url_):
+        rel_ = instance_mock(
+            request, _Relationship, rId=rId_, target_ref=url_
+        )
+        rel_.reltype = rtype
+        rel_.target_part = doc_part
+        return rel_
 
     @pytest.fixture(params=[
         ('w:p', True),
@@ -196,6 +214,41 @@ class DescribePartRelationshipManagementInterface(object):
     def load_rel_fixture(self, part, rels_, reltype_, part_, rId_):
         part._rels = rels_
         return part, rels_, reltype_, part_, rId_
+
+    @pytest.fixture(
+        params=(
+            ((), ()),
+            (("foo",), (0, 2)),
+            (("bar",), (1,)),
+            (("foo", "bar",), (0, 1, 2)),
+            (("foo", "bar", "baz",), (0, 1, 2)),
+            (("boo", "bar", "faz",), (1,)),
+        )
+    )
+    def rel_types_fixture(self, request):
+        # ---rels_ has three relationships, of type "foo", "bar", and "foo" respectively
+        # ---and pointing to part_0, 1, and 2 respectively
+        reltypes, expected_part_idxs = request.param
+        parts_ = tuple(
+            instance_mock(request, Part, name="part_%d" % idx) for idx in range(3)
+        )
+        relationships_ = tuple(
+            instance_mock(
+                request,
+                _Relationship,
+                name="rel_%d" % idx,
+                reltype=reltype,
+                target_part=parts_[idx]
+            )
+            for idx, reltype in enumerate(("foo", "bar", "foo"))
+        )
+        rels_ = dict(
+            ("rId%d" % (idx + 1), relationships_[idx]) for idx in range(3)
+        )
+        expected_parts = set(
+            parts_[idx] for idx in range(3) if idx in expected_part_idxs
+        )
+        return rels_, reltypes, expected_parts
 
     @pytest.fixture
     def relate_to_part_fixture(
@@ -264,6 +317,10 @@ class DescribePartRelationshipManagementInterface(object):
         rels_.get_or_add_ext_rel.return_value = rId_
         rels_.related_parts = related_parts_
         return rels_
+
+    @pytest.fixture
+    def rels_prop_(self, request):
+        return property_mock(request, Part, 'rels')
 
     @pytest.fixture
     def related_parts_(self, request):
@@ -373,7 +430,7 @@ class DescribePartFactory(object):
 
     @pytest.fixture
     def CustomPartClass_(self, request, part_of_custom_type_):
-        CustomPartClass_ = Mock(name='CustomPartClass', spec=Part)
+        CustomPartClass_ = instance_mock(request, Part, name='CustomPartClass')
         CustomPartClass_.load.return_value = part_of_custom_type_
         return CustomPartClass_
 
