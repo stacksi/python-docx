@@ -1,33 +1,34 @@
 # encoding: utf-8
 
-"""
-|DocumentPart| and closely related objects
-"""
+"""|DocumentPart| and closely related objects."""
 
 from __future__ import (
     absolute_import, division, print_function, unicode_literals
 )
 
-from ..document import Document
-from .numbering import NumberingPart
-from ..opc.constants import RELATIONSHIP_TYPE as RT
-from ..opc.part import XmlPart
-from ..oxml.shape import CT_Inline
-from ..shape import InlineShapes
-from ..shared import lazyproperty
-from .settings import SettingsPart
-from .styles import StylesPart
+from itertools import chain
+
+from docx.document import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from docx.opc.part import XmlPart
+from docx.oxml.shape import CT_Inline
+from docx.parts.numbering import NumberingPart
+from docx.parts.settings import SettingsPart
+from docx.parts.styles import StylesPart
+from docx.shape import InlineShapes
+from docx.shared import lazyproperty
 
 
 class DocumentPart(XmlPart):
-    """
-    Main document part of a WordprocessingML (WML) package, aka a .docx file.
+    """Main document part of a WordprocessingML (WML) package.
+
     Acts as broker to other parts such as image, core properties, and style
     parts. It also acts as a convenient delegate when a mid-document object
     needs a service involving a remote ancestor. The `Parented.part` property
     inherited by many content objects provides access to this part object for
     that purpose.
     """
+
     @property
     def core_properties(self):
         """
@@ -90,7 +91,12 @@ class DocumentPart(XmlPart):
         Story parts include this main document part, headers, footers,
         footnotes, and endnotes.
         """
-        raise NotImplementedError
+        return chain(
+            (self,),
+            self.iter_parts_related_by(
+                {RT.COMMENTS, RT.ENDNOTES, RT.FOOTER, RT.FOOTNOTES, RT.HEADER}
+            )
+        )
 
     def new_pic_inline(self, image_descriptor, width, height):
         """

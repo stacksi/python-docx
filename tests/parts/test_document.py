@@ -11,6 +11,7 @@ from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.opc.coreprops import CoreProperties
 from docx.package import Package
 from docx.parts.document import DocumentPart
+from docx.parts.hdrftr import FooterPart, HeaderPart
 from docx.parts.image import ImagePart
 from docx.parts.numbering import NumberingPart
 from docx.parts.settings import SettingsPart
@@ -23,9 +24,7 @@ from docx.text.paragraph import Paragraph
 from ..oxml.parts.unitdata.document import a_body, a_document
 from ..oxml.unitdata.text import a_p
 from ..unitutil.file import snippet_text
-from ..unitutil.mock import (
-    instance_mock, class_mock, method_mock, property_mock
-)
+from ..unitutil.mock import instance_mock, class_mock, method_mock, property_mock
 
 
 class DescribeDocumentPart(object):
@@ -44,6 +43,19 @@ class DescribeDocumentPart(object):
         image_parts.get_or_add_image_part.assert_called_once_with(path)
         document_part.relate_to.assert_called_once_with(image_part_, RT.IMAGE)
         assert (rId, image) == (rId_, image_)
+
+    def it_can_iterate_the_story_parts(
+            self, iter_parts_related_by_, header_part_, footer_part_
+    ):
+        iter_parts_related_by_.return_value = iter((header_part_, footer_part_))
+        document_part = DocumentPart(None, None, None, None)
+
+        story_parts = document_part.iter_story_parts()
+
+        iter_parts_related_by_.assert_called_once_with(
+            {RT.HEADER, RT.FOOTER, RT.FOOTNOTES, RT.ENDNOTES, RT.COMMENTS}
+        )
+        assert list(story_parts) == [document_part, header_part_, footer_part_]
 
     def it_provides_access_to_the_document_settings(self, settings_fixture):
         document_part, settings_ = settings_fixture
@@ -301,8 +313,16 @@ class DescribeDocumentPart(object):
         return instance_mock(request, CoreProperties)
 
     @pytest.fixture
+    def footer_part_(self, request):
+        return instance_mock(request, FooterPart)
+
+    @pytest.fixture
     def get_or_add_image_(self, request):
         return method_mock(request, DocumentPart, 'get_or_add_image')
+
+    @pytest.fixture
+    def header_part_(self, request):
+        return instance_mock(request, HeaderPart)
 
     @pytest.fixture
     def image_(self, request):
@@ -315,6 +335,10 @@ class DescribeDocumentPart(object):
     @pytest.fixture
     def InlineShapes_(self, request):
         return class_mock(request, 'docx.parts.document.InlineShapes')
+
+    @pytest.fixture
+    def iter_parts_related_by_(self, request):
+        return method_mock(request, DocumentPart, 'iter_parts_related_by')
 
     @pytest.fixture
     def next_id_prop_(self, request):
