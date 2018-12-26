@@ -49,13 +49,13 @@ class CT_SectPr(BaseOxmlElement):
         'w:printerSettings', 'w:sectPrChange',
     )
     type = ZeroOrOne('w:type', successors=(
-        __child_sequence__[__child_sequence__.index('w:type')+1:]
+        __child_sequence__[__child_sequence__.index('w:type') + 1:]
     ))
     pgSz = ZeroOrOne('w:pgSz', successors=(
-        __child_sequence__[__child_sequence__.index('w:pgSz')+1:]
+        __child_sequence__[__child_sequence__.index('w:pgSz') + 1:]
     ))
     pgMar = ZeroOrOne('w:pgMar', successors=(
-        __child_sequence__[__child_sequence__.index('w:pgMar')+1:]
+        __child_sequence__[__child_sequence__.index('w:pgMar') + 1:]
     ))
 
     @property
