@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-"""
-Test suite for docx.image package
-"""
+"""Unit test suite for docx.image package"""
 
 from __future__ import absolute_import, print_function, unicode_literals
 
@@ -21,8 +19,13 @@ from docx.shared import Emu, Length
 
 from ..unitutil.file import test_file
 from ..unitutil.mock import (
-    function_mock, class_mock, initializer_mock, instance_mock, method_mock,
-    property_mock
+    ANY,
+    class_mock,
+    function_mock,
+    initializer_mock,
+    instance_mock,
+    method_mock,
+    property_mock,
 )
 
 
@@ -50,17 +53,14 @@ class DescribeImage(object):
         assert image is image_
 
     def it_can_construct_from_an_image_stream(self, from_stream_fixture):
-        # fixture ----------------------
         stream_, blob_, filename_in = from_stream_fixture[:3]
         _ImageHeaderFactory_, image_header_ = from_stream_fixture[3:5]
         Image__init_, filename_out = from_stream_fixture[5:]
-        # exercise ---------------------
+
         image = Image._from_stream(stream_, blob_, filename_in)
-        # verify -----------------------
+
         _ImageHeaderFactory_.assert_called_once_with(stream_)
-        Image__init_.assert_called_once_with(
-            blob_, filename_out, image_header_
-        )
+        Image__init_.assert_called_once_with(ANY, blob_, filename_out, image_header_)
         assert isinstance(image, Image)
 
     def it_provides_access_to_the_image_blob(self):

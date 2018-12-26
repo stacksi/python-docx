@@ -1,8 +1,6 @@
 # encoding: utf-8
 
-"""
-Test suite for docx.image.png module
-"""
+"""Unit test suite for docx.image.png module"""
 
 from __future__ import absolute_import, print_function
 
@@ -18,20 +16,33 @@ from docx.image.png import (
 )
 
 from ..unitutil.mock import (
-    call, class_mock, function_mock, initializer_mock, instance_mock,
-    method_mock
+    ANY,
+    call,
+    class_mock,
+    function_mock,
+    initializer_mock,
+    instance_mock,
+    method_mock,
 )
 
 
 class DescribePng(object):
 
-    def it_can_construct_from_a_png_stream(self, from_stream_fixture):
-        stream_, _PngParser_, Png__init__, cx, cy, horz_dpi, vert_dpi = (
-            from_stream_fixture
-        )
+    def it_can_construct_from_a_png_stream(
+            self, stream_, _PngParser_, png_parser_, Png__init__
+    ):
+        px_width, px_height, horz_dpi, vert_dpi = 42, 24, 36, 63
+        png_parser_.px_width = px_width
+        png_parser_.px_height = px_height
+        png_parser_.horz_dpi = horz_dpi
+        png_parser_.vert_dpi = vert_dpi
+
         png = Png.from_stream(stream_)
+
         _PngParser_.parse.assert_called_once_with(stream_)
-        Png__init__.assert_called_once_with(cx, cy, horz_dpi, vert_dpi)
+        Png__init__.assert_called_once_with(
+            ANY, px_width, px_height, horz_dpi, vert_dpi
+        )
         assert isinstance(png, Png)
 
     def it_knows_its_content_type(self):
@@ -43,19 +54,6 @@ class DescribePng(object):
         assert png.default_ext == 'png'
 
     # fixtures -------------------------------------------------------
-
-    @pytest.fixture
-    def from_stream_fixture(
-            self, stream_, _PngParser_, png_parser_, Png__init__):
-        px_width, px_height, horz_dpi, vert_dpi = 42, 24, 36, 63
-        png_parser_.px_width = px_width
-        png_parser_.px_height = px_height
-        png_parser_.horz_dpi = horz_dpi
-        png_parser_.vert_dpi = vert_dpi
-        return (
-            stream_, _PngParser_, Png__init__, px_width, px_height,
-            horz_dpi, vert_dpi
-        )
 
     @pytest.fixture
     def Png__init__(self, request):
@@ -78,11 +76,13 @@ class DescribePng(object):
 
 class Describe_PngParser(object):
 
-    def it_can_parse_the_headers_of_a_PNG_stream(self, parse_fixture):
-        stream_, _Chunks_, _PngParser__init_, chunks_ = parse_fixture
+    def it_can_parse_the_headers_of_a_PNG_stream(
+        self, stream_, _Chunks_, _PngParser__init_, chunks_
+    ):
         png_parser = _PngParser.parse(stream_)
+
         _Chunks_.from_stream.assert_called_once_with(stream_)
-        _PngParser__init_.assert_called_once_with(chunks_)
+        _PngParser__init_.assert_called_once_with(ANY, chunks_)
         assert isinstance(png_parser, _PngParser)
 
     def it_knows_the_image_width_and_height(self, dimensions_fixture):
@@ -149,10 +149,6 @@ class Describe_PngParser(object):
         return png_parser
 
     @pytest.fixture
-    def parse_fixture(self, stream_, _Chunks_, _PngParser__init_, chunks_):
-        return stream_, _Chunks_, _PngParser__init_, chunks_
-
-    @pytest.fixture
     def _PngParser__init_(self, request):
         return initializer_mock(request, _PngParser)
 
@@ -163,14 +159,17 @@ class Describe_PngParser(object):
 
 class Describe_Chunks(object):
 
-    def it_can_construct_from_a_stream(self, from_stream_fixture):
-        stream_, _ChunkParser_, chunk_parser_, _Chunks__init_, chunk_lst = (
-            from_stream_fixture
-        )
+    def it_can_construct_from_a_stream(
+        self, stream_, _ChunkParser_, chunk_parser_, _Chunks__init_
+    ):
+        chunk_lst = [1, 2]
+        chunk_parser_.iter_chunks.return_value = iter(chunk_lst)
+
         chunks = _Chunks.from_stream(stream_)
+
         _ChunkParser_.from_stream.assert_called_once_with(stream_)
         chunk_parser_.iter_chunks.assert_called_once_with()
-        _Chunks__init_.assert_called_once_with(chunk_lst)
+        _Chunks__init_.assert_called_once_with(ANY, chunk_lst)
         assert isinstance(chunks, _Chunks)
 
     def it_provides_access_to_the_IHDR_chunk(self, IHDR_fixture):
@@ -187,15 +186,6 @@ class Describe_Chunks(object):
             chunks.IHDR
 
     # fixtures -------------------------------------------------------
-
-    @pytest.fixture
-    def from_stream_fixture(
-            self, stream_, _ChunkParser_, chunk_parser_, _Chunks__init_):
-        chunk_lst = [1, 2]
-        chunk_parser_.iter_chunks.return_value = iter(chunk_lst)
-        return (
-            stream_, _ChunkParser_, chunk_parser_, _Chunks__init_, chunk_lst
-        )
 
     @pytest.fixture
     def _ChunkParser_(self, request, chunk_parser_):
@@ -252,13 +242,13 @@ class Describe_Chunks(object):
 
 class Describe_ChunkParser(object):
 
-    def it_can_construct_from_a_stream(self, from_stream_fixture):
-        stream_, StreamReader_, stream_rdr_, _ChunkParser__init_ = (
-            from_stream_fixture
-        )
+    def it_can_construct_from_a_stream(
+        self, stream_, StreamReader_, stream_rdr_, _ChunkParser__init_
+    ):
         chunk_parser = _ChunkParser.from_stream(stream_)
+
         StreamReader_.assert_called_once_with(stream_, BIG_ENDIAN)
-        _ChunkParser__init_.assert_called_once_with(stream_rdr_)
+        _ChunkParser__init_.assert_called_once_with(ANY, stream_rdr_)
         assert isinstance(chunk_parser, _ChunkParser)
 
     def it_can_iterate_over_the_chunks_in_its_png_stream(self, iter_fixture):
@@ -305,11 +295,6 @@ class Describe_ChunkParser(object):
     @pytest.fixture
     def _ChunkParser__init_(self, request):
         return initializer_mock(request, _ChunkParser)
-
-    @pytest.fixture
-    def from_stream_fixture(
-            self, stream_, StreamReader_, stream_rdr_, _ChunkParser__init_):
-        return stream_, StreamReader_, stream_rdr_, _ChunkParser__init_
 
     @pytest.fixture
     def _iter_chunk_offsets_(self, request):
