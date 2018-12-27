@@ -20,7 +20,7 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
 
-from docx import __version__
+from docx import __version__  # noqa
 
 
 # -- General configuration ---------------------------------------------------
@@ -100,6 +100,8 @@ rst_epilog = """
 .. |docx| replace:: ``python-docx``
 
 .. |Emu| replace:: :class:`.Emu`
+
+.. |EndnotesPart| replace:: :class:`.EndnotesPart`
 
 .. |False| replace:: :class:`False`
 
