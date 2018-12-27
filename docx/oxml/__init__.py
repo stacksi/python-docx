@@ -80,6 +80,9 @@ register_element_cls('w:document', CT_Document)
 from docx.oxml.endnotes import CT_Endnotes  # noqa
 register_element_cls('w:endnotes', CT_Endnotes)
 
+from docx.oxml.footnotes import CT_Footnotes  # noqa
+register_element_cls('w:footnotes', CT_Footnotes)
+
 from docx.oxml.hdrftr import CT_HdrFtr  # noqa
 register_element_cls('w:ftr', CT_HdrFtr)
 register_element_cls('w:hdr', CT_HdrFtr)
