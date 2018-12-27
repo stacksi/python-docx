@@ -10,6 +10,7 @@ from docx.bookmark import Bookmarks, _DocumentBookmarkFinder, _PartBookmarkFinde
 from docx.opc.part import Part, XmlPart
 from docx.parts.document import DocumentPart
 
+from .unitutil.cxml import element
 from .unitutil.mock import (
     ANY,
     call,
@@ -116,6 +117,7 @@ class Describe_DocumentBookmarkFinder(object):
 
 
 class Describe_PartBookmarkFinder(object):
+    """Unit tests for _PartBookmarkFinder class"""
 
     def it_provides_an_iter_start_end_pairs_interface_method(
         self, part_, _init_, _iter_start_end_pairs_
@@ -126,6 +128,41 @@ class Describe_PartBookmarkFinder(object):
         _iter_start_end_pairs_.assert_called_once_with()
         assert pairs == _iter_start_end_pairs_.return_value
 
+    def it_iterates_start_end_pairs_to_help(
+        self, _iter_starts_, _matching_end_, _name_already_used_
+    ):
+        bookmarkStarts = tuple(
+            element("w:bookmarkStart{w:name=%s,w:id=%d}" % (name, idx))
+            for idx, name in enumerate(("bmk-0", "bmk-1", "bmk-2", "bmk-1"))
+        )
+        bookmarkEnds = (
+            None,
+            element("w:bookmarkEnd{w:id=1}"),
+            element("w:bookmarkEnd{w:id=2}"),
+        )
+        _iter_starts_.return_value = iter(enumerate(bookmarkStarts))
+        _matching_end_.side_effect = (
+            None, bookmarkEnds[1], bookmarkEnds[2], bookmarkEnds[1]
+        )
+        _name_already_used_.side_effect = (False, False, True)
+        finder = _PartBookmarkFinder(None)
+
+        start_end_pairs = list(finder._iter_start_end_pairs())
+
+        assert _matching_end_.call_args_list == [
+            call(bookmarkStarts[0], 0),
+            call(bookmarkStarts[1], 1),
+            call(bookmarkStarts[2], 2),
+            call(bookmarkStarts[3], 3),
+        ]
+        assert _name_already_used_.call_args_list == [
+            call("bmk-1"), call("bmk-2"), call("bmk-1")
+        ]
+        assert start_end_pairs == [
+            (bookmarkStarts[1], bookmarkEnds[1]),
+            (bookmarkStarts[2], bookmarkEnds[2]),
+        ]
+
     # fixture components ---------------------------------------------
 
     @pytest.fixture
@@ -135,6 +172,18 @@ class Describe_PartBookmarkFinder(object):
     @pytest.fixture
     def _iter_start_end_pairs_(self, request):
         return method_mock(request, _PartBookmarkFinder, '_iter_start_end_pairs')
+
+    @pytest.fixture
+    def _iter_starts_(self, request):
+        return method_mock(request, _PartBookmarkFinder, '_iter_starts')
+
+    @pytest.fixture
+    def _matching_end_(self, request):
+        return method_mock(request, _PartBookmarkFinder, '_matching_end')
+
+    @pytest.fixture
+    def _name_already_used_(self, request):
+        return method_mock(request, _PartBookmarkFinder, '_name_already_used')
 
     @pytest.fixture
     def part_(self, request):
