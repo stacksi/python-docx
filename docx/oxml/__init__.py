@@ -77,6 +77,9 @@ from docx.oxml.document import CT_Body, CT_Document  # noqa
 register_element_cls('w:body', CT_Body)
 register_element_cls('w:document', CT_Document)
 
+from docx.oxml.hdrftr import CT_HdrFtr  # noqa
+register_element_cls('w:ftr', CT_HdrFtr)
+
 from docx.oxml.numbering import (  # noqa
     CT_Num,
     CT_Numbering,
