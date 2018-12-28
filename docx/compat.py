@@ -14,6 +14,11 @@ import sys
 # Python 3 versions
 # ===========================================================================
 
+if sys.version_info >= (3, 3):
+    from collections.abc import Sequence
+else:
+    from collections import Sequence  # noqa
+
 if sys.version_info >= (3, 0):
 
     from io import BytesIO
