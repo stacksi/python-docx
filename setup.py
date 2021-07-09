@@ -26,7 +26,7 @@ version = re.search(
 ).group(1)
 
 
-NAME = 'stacksi-python-docx'
+NAME = 'python-docx'
 VERSION = version
 DESCRIPTION = 'Create and update Microsoft Word .docx files.'
 KEYWORDS = 'docx office openxml word'
