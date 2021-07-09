@@ -43,4 +43,4 @@ sdist:
 	$(SETUP) sdist
 
 upload:
-	$(SETUP) sdist upload -r stacksi
+	$(SETUP) sdist upload
